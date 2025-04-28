@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: p2p-app
+  namespace: p2p-ns
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: p2p-app
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: p2p-app
+    spec:
+      serviceAccountName: p2p-serviceaccount
+      securityContext:
+        runAsUser: 65532      # default non-root UID in distroless
+        runAsGroup: 65532     # default non-root GID in distroless
+        runAsNonRoot: true
+        fsGroup: 65532        # this gives write permission to mounted volumes
+      containers:
+      - name: p2p-container
+        image: myregistry.dockerdomain.com:5443/p2p:latest
+        ports:
+        - containerPort: 8080
+          name: api
+        - containerPort: 47500
+          name: discovery
+        - containerPort: 47100
+          name: communication
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        volumeMounts:
+          - mountPath: /app/ignite/work
+            name: ignite-workdir
+        env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: NODE_IP_ADDRESS
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+          - name: POD_NAME_SPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_UID
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.uid
+          - name: POD_IP_ADDRESS
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          - name: JAVA_TOOL_OPTIONS
+            value: >
+              -DIGNITE_WORK_DIR=/app/ignite/work
+              --add-opens=java.base/jdk.internal.access=ALL-UNNAMED
+              --add-opens=java.base/jdk.internal.misc=ALL-UNNAMED
+              --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+              --add-opens=java.base/sun.util.calendar=ALL-UNNAMED
+              --add-opens=java.management/com.sun.jmx.mbeanserver=ALL-UNNAMED
+              --add-opens=jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED
+              --add-opens=java.base/sun.reflect.generics.reflectiveObjects=ALL-UNNAMED
+              --add-opens=jdk.management/com.sun.management.internal=ALL-UNNAMED
+              --add-opens=java.base/java.io=ALL-UNNAMED
+              --add-opens=java.base/java.nio=ALL-UNNAMED
+              --add-opens=java.base/java.net=ALL-UNNAMED
+              --add-opens=java.base/java.util=ALL-UNNAMED
+              --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
+              --add-opens=java.base/java.util.concurrent.locks=ALL-UNNAMED
+              --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED
+              --add-opens=java.base/java.lang=ALL-UNNAMED
+              --add-opens=java.base/java.lang.invoke=ALL-UNNAMED
+              --add-opens=java.base/java.math=ALL-UNNAMED
+              --add-opens=java.sql/java.sql=ALL-UNNAMED
+              --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
+              --add-opens=java.base/java.time=ALL-UNNAMED
+              --add-opens=java.base/java.text=ALL-UNNAMED
+              --add-opens=java.management/sun.management=ALL-UNNAMED
+              --add-opens=java.desktop/java.awt.font=ALL-UNNAMED
+      volumes:
+        - name: ignite-workdir
+          emptyDir: {}

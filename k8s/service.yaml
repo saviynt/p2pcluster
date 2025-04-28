@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: p2p-api-service
+  namespace: p2p-ns
+spec:
+  selector:
+    app: p2p-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+      name: api
+#  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: p2p-service
+  namespace: p2p-ns
+spec:
+  clusterIP: None  # Headless!
+  selector:
+    app: p2p-app
+  ports:
+    - port: 47500  # Discovery port
+      name: discovery
+    - port: 47100  # Communication
+      name: communication
