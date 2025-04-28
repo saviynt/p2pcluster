@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: p2pCluster
+app:
+  k8s:
+    node-name: ${NODE_NAME:my-node}
+    node-ip-address: ${NODE_IP_ADDRESS:168.0.0.0}
+    pod-name-space: ${POD_NAME_SPACE:my-namespace}
+    pod-name: ${POD_NAME:my-pod}
+    pod-uid: ${POD_UID:saldjlasj739295}
+    pod-ip-address: ${POD_IP_ADDRESS:129.0.0.0}
+
+logging:
+  level:
+    root: INFO
+    org.apache.ignite: INFO
